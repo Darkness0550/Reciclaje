@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reutilización de Prendas - Proyecto Ecológico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: auto; /* permitir scroll en pantallas pequeñas */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(18px, 3.5vw, 40px);
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .screen.active {
+            opacity: 1;
+        }
+
+        .screen.fadeout {
+            opacity: 0;
+        }
+
+        .eco-icon {
+            font-size: clamp(2.5rem, 6vw, 6em);
+            margin-bottom: clamp(12px, 4vw, 40px);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+
+        h1 {
+            color: white;
+            font-size: clamp(1.6rem, 4.5vw, 3.5em);
+            text-align: center;
+            margin-bottom: clamp(12px, 4vw, 40px);
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+            line-height: 1.2;
+        }
+
+        .typing-text {
+            font-size: clamp(1rem, 2.5vw, 2em);
+            color: white;
+            text-align: center;
+            line-height: 1.6;
+            max-width: min(90%, 900px);
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+            font-weight: 500;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 4px;
+            background-color: white;
+            animation: blink 0.7s infinite;
+            margin-left: 3px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: clamp(12px, 3vw, 30px);
+            margin-top: clamp(20px, 4vw, 60px);
+            width: min(95%, 1000px);
+        }
+
+        .material-card {
+            background: white;
+            padding: clamp(18px, 3vw, 40px);
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: scale(0);
+            animation: popIn 0.6s forwards;
+        }
+
+        .material-card:nth-child(1) { animation-delay: 0.2s; }
+        .material-card:nth-child(2) { animation-delay: 0.4s; }
+        .material-card:nth-child(3) { animation-delay: 0.6s; }
+        .material-card:nth-child(4) { animation-delay: 0.8s; }
+
+        @keyframes popIn {
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .material-icon {
+            font-size: clamp(2rem, 5vw, 4em);
+            margin-bottom: clamp(8px, 2.5vw, 20px);
+        }
+
+        .material-card h3 {
+            color: #667eea;
+            font-size: clamp(1rem, 2.2vw, 1.8em);
+            margin-bottom: 8px;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 90%;
+            max-width: 900px;
+            height: min(60vh, 600px); /* adaptable al alto de la pantalla */
+            margin-top: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .carousel {
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+            height: 100%;
+        }
+
+        .carousel-item {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+        }
+
+        .carousel-item img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            background: white;
+        }
+
+        .placeholder {
+            font-size: 4em;
+            color: #ccc;
+        }
+
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .carousel-arrow:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .arrow-left {
+            left: 20px;
+        }
+
+        .arrow-right {
+            right: 20px;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-dot.active {
+            background: white;
+            transform: scale(1.4);
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transition: all 0.3s;
+        }
+
+        .progress-dot.active {
+            background: white;
+            transform: scale(1.5);
+        }
+
+        @media (max-width: 1024px) {
+            .carousel-container {
+                height: min(55vh, 520px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .typing-text {
+                font-size: 1.3em;
+            }
+
+            .eco-icon {
+                font-size: 4em;
+            }
+
+            .materials-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .carousel-container {
+                height: min(45vh, 420px);
+            }
+
+            .material-card h3 {
+                font-size: clamp(1rem, 2.6vw, 1.4em);
+            }
+
+            .carousel-arrow {
+                width: 48px;
+                height: 48px;
+                font-size: 24px;
+            }
+
+            .progress-bar {
+                bottom: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla 1: Mensaje ecológico -->
+    <div class="screen" id="screen1">
+        <div class="eco-icon">♻️🌍</div>
+        <h1>Cuidado del Medio Ambiente</h1>
+        <div class="typing-text" id="text1"></div>
+    </div>
+
+    <!-- Pantalla 2: Tu proyecto -->
+    <div class="screen" id="screen2">
+        <div class="eco-icon">👜✨</div>
+        <h1>Mi Proyecto Ecológico</h1>
+        <div class="typing-text" id="text2"></div>
+    </div>
+
+    <!-- Pantalla 3: Materiales -->
+    <div class="screen" id="screen3">
+        <h1>Materiales Utilizados</h1>
+        <div class="typing-text" id="text3"></div>
+        <div class="materials-grid">
+            <div class="material-card">
+                <div class="material-icon">👖</div>
+                <h3>Pantalón Jean</h3>
+            </div>
+            <div class="material-card">
+                <div class="material-icon">🧵</div>
+                <h3>Retazos de Telas</h3>
+            </div>
+            <div class="material-card">
+                <div class="material-icon">🪡</div>
+                <h3>Hilo para Bordar y Coser</h3>
+            </div>
+            <div class="material-card">
+                <div class="material-icon">👜</div>
+                <h3>Resultado: Un Bolso</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla 4: Galería -->
+    <div class="screen" id="screen4">
+        <h1>Galería del Proyecto</h1>
+        <div class="carousel-container">
+            <button class="carousel-arrow arrow-left" onclick="moveCarousel(-1)">‹</button>
+            <div class="carousel" id="carousel"></div>
+            <button class="carousel-arrow arrow-right" onclick="moveCarousel(1)">›</button>
+            <div class="carousel-nav" id="carouselNav"></div>
+        </div>
+    </div>
+
+    <!-- Barra de progreso -->
+    <div class="progress-bar">
+        <div class="progress-dot active"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+    </div>
+
+    <script>
+        const screens = [
+            {
+                id: 'screen1',
+                textId: 'text1',
+                content: 'La reutilización de prendas es una práctica esencial para cuidar nuestro planeta. Cada prenda que reutilizamos evita residuos textiles y reduce nuestra huella ecológica.',
+                duration: 8000
+            },
+            {
+                id: 'screen2',
+                textId: 'text2',
+                content: 'Yo realicé un bolso fabricado con ropa usada, dándole una segunda vida a materiales que de otra forma terminarían en la basura.',
+                duration: 8000
+            },
+            {
+                id: 'screen3',
+                textId: 'text3',
+                content: 'Usé los siguientes materiales que tenía disponibles en casa:',
+                duration: 10000
+            },
+            {
+                id: 'screen4',
+                textId: null,
+                content: null,
+                duration: 0
+            }
+        ];
+
+        let currentScreen = 0;
+
+        // Función de escritura con efecto máquina de escribir
+        function typeWriter(elementId, text, speed = 40) {
+            return new Promise((resolve) => {
+                const element = document.getElementById(elementId);
+                let i = 0;
+                element.innerHTML = '';
+                
+                // nodo de texto independiente para evitar que el cursor se incluya en el contenido
+                const contentNode = document.createTextNode('');
+                element.appendChild(contentNode);
+
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                // no poner texto dentro del cursor para que no se mezcle con contentNode
+                element.appendChild(cursor);
+                
+                function type() {
+                    if (i < text.length) {
+                        contentNode.nodeValue += text.charAt(i);
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        setTimeout(() => {
+                            cursor.remove();
+                            resolve();
+                        }, 1000);
+                    }
+                }
+                type();
+            });
+        }
+
+        // Cambiar de pantalla
+        async function showScreen(index) {
+            if (index < 0 || index >= screens.length) return;
+
+            // Ocultar pantalla actual
+            if (currentScreen < screens.length) {
+                const current = document.getElementById(screens[currentScreen].id);
+                current.classList.remove('active');
+                current.classList.add('fadeout');
+            }
+
+            // Actualizar progreso
+            document.querySelectorAll('.progress-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            currentScreen = index;
+
+            // Mostrar nueva pantalla
+            setTimeout(async () => {
+                const newScreen = document.getElementById(screens[index].id);
+                newScreen.classList.remove('fadeout');
+                newScreen.classList.add('active');
+
+                // Animar texto si existe
+                if (screens[index].textId) {
+                    await typeWriter(screens[index].textId, screens[index].content);
+                }
+
+                // Auto-avanzar a la siguiente pantalla (excepto la última)
+                if (index < screens.length - 1 && screens[index].duration > 0) {
+                    setTimeout(() => {
+                        showScreen(index + 1);
+                    }, screens[index].duration);
+                }
+            }, 500);
+        }
+
+        // Configurar carrusel
+        const imageNames = [
+            'image.png',
+            'imagen2.jpeg',
+            'imagen3.jpeg',
+            'imagen4.jpeg',
+            'imagen5.jpeg'
+        ];
+
+        let currentSlide = 0;
+        const carousel = document.getElementById('carousel');
+        const carouselNav = document.getElementById('carouselNav');
+
+        imageNames.forEach((imgName, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'carousel-item';
+            
+            const img = document.createElement('img');
+            // Usar ruta relativa desde el HTML para jalar imágenes dentro de la carpeta "images"
+            img.src = `./images/${imgName}`;
+            img.alt = `Imagen del bolso ${index + 1}`;
+            img.onerror = function() {
+                this.parentElement.innerHTML = '<div class="placeholder">📸</div>';
+            };
+            
+            slide.appendChild(img);
+            carousel.appendChild(slide);
+
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot';
+            if (index === 0) dot.classList.add('active');
+            dot.onclick = () => goToSlide(index);
+            carouselNav.appendChild(dot);
+        });
+
+        function moveCarousel(direction) {
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = imageNames.length - 1;
+            if (currentSlide >= imageNames.length) currentSlide = 0;
+            updateCarousel();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+            
+            const dots = carouselNav.querySelectorAll('.nav-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Soporte táctil (swipe) para el carrusel
+        (function addTouchSupport() {
+            let startX = 0;
+            let isMoving = false;
+            const threshold = 40; // px mínimo para considerar swipe
+
+            carousel.addEventListener('touchstart', (e) => {
+                if (!e.touches || e.touches.length === 0) return;
+                startX = e.touches[0].clientX;
+                isMoving = true;
+            }, {passive: true});
+
+            carousel.addEventListener('touchmove', (e) => {
+                if (!isMoving || !e.touches || e.touches.length === 0) return;
+                const dx = e.touches[0].clientX - startX;
+                // opcional: se puede mostrar movimiento en tiempo real aquí
+            }, {passive: true});
+
+            carousel.addEventListener('touchend', (e) => {
+                if (!isMoving) return;
+                const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : 0;
+                const dx = endX - startX;
+                if (dx > threshold) moveCarousel(-1);
+                else if (dx < -threshold) moveCarousel(1);
+                isMoving = false;
+            }, {passive: true});
+
+            // Soporte teclado (flechas)
+            window.addEventListener('keydown', (e) => {
+                if (!document.getElementById('screen4').classList.contains('active')) return;
+                if (e.key === 'ArrowLeft') moveCarousel(-1);
+                if (e.key === 'ArrowRight') moveCarousel(1);
+            });
+        })();
+
+         // Iniciar presentación
+         showScreen(0);
+ 
+         // Auto-avance del carrusel en la última pantalla
+         let carouselInterval;
+         const observer = new MutationObserver(() => {
+             const screen4 = document.getElementById('screen4');
+             if (screen4.classList.contains('active')) {
+                 // limpiar cualquier intervalo previo y crear uno nuevo con ritmo más rápido
+                 clearInterval(carouselInterval);
+                 carouselInterval = setInterval(() => {
+                     moveCarousel(1);
+                 }, 1800); // 1500 ms entre slides
+             } else {
+                 clearInterval(carouselInterval);
+             }
+         });
+ 
+         observer.observe(document.getElementById('screen4'), {
+             attributes: true,
+             attributeFilter: ['class']
+         });
+    </script>
+</body>
+</html>
